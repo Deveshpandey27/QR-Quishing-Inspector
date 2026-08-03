@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import os
+from utils.qr_decoder import decode_qr
 
 app = Flask(__name__)
 
@@ -22,9 +23,14 @@ def upload():
     if file.filename == "":
         return "No file selected."
 
-    file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+    file.save(file_path)
 
-    return "QR Code uploaded successfully!"
+    decoded_data = decode_qr(file_path)
+    if decoded_data:
+        return f"Decoded QR Code:<br><br>{decoded_data}"
+
+    return "No QR code found in the uploaded image."
 
 
 if __name__ == "__main__":
