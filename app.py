@@ -1,37 +1,107 @@
-from flask import Flask, render_template, request
-import os
-from utils.qr_decoder import decode_qr
+from flask import Flask, render_template, request, jsonify
+
+from utils.url_analyzer import analyze_url
+from utils.ml_model import predict_url
+
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@app.route("/analyze", methods=["POST"])
+def analyze():
 
-    if "qr_image" not in request.files:
-        return "No file selected."
+    data = request.get_json()
 
-    file = request.files["qr_image"]
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "No data received."
+        }), 400
 
-    if file.filename == "":
-        return "No file selected."
+    url = data.get("url", "").strip()
 
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-    file.save(file_path)
+    if not url:
+        return jsonify({
+            "success": False,
+            "error": "Please provide a URL."
+        }), 400
 
-    decoded_data = decode_qr(file_path)
-    if decoded_data:
-        return f"Decoded QR Code:<br><br>{decoded_data}"
+    # Basic URL validation
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
 
-    return "No QR code found in the uploaded image."
+    try:
+        rule_result = analyze_url(url)
+        ml_result = predict_url(url)
+
+        rule_score = rule_result["score"]
+        ml_score = ml_result["suspicious_probability"]
+
+        # Combine cybersecurity rules + ML
+        final_score = round(
+            (rule_score * 0.60) +
+            (ml_score * 0.40)
+        )
+
+        final_score = min(max(final_score, 0), 100)
+
+        # Final classification
+        if final_score >= 70:
+            status = "dangerous"
+            title = "Dangerous QR Code"
+            message = "This URL shows strong indicators of phishing or quishing."
+
+        elif final_score >= 40:
+            status = "suspicious"
+            title = "Suspicious QR Code"
+            message = "This URL contains some characteristics commonly associated with suspicious websites."
+
+        else:
+            status = "safe"
+            title = "Looks Safe"
+            message = "No major phishing indicators were detected by this prototype."
+
+        reasons = rule_result["reasons"]
+
+        if ml_score >= 60:
+            reasons.append(
+                "The machine-learning model considers this URL suspicious."
+            )
+
+        if not reasons:
+            reasons.append(
+                "No significant suspicious indicators were detected."
+            )
+
+        return jsonify({
+            "success": True,
+            "url": url,
+            "hostname": rule_result["hostname"],
+            "score": final_score,
+            "ml_score": round(ml_score),
+            "rule_score": rule_score,
+            "status": status,
+            "title": title,
+            "message": message,
+            "reasons": reasons
+        })
+
+    except Exception as error:
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )

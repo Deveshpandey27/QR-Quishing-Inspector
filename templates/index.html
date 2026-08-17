@@ -1,60 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="QR Quishing Inspector - Scan QR codes and analyze URLs for phishing risks.">
 
     <title>QR Quishing Inspector</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    >
+
+    <!-- Custom CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
 </head>
 
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-dark bg-dark">
+<!-- ================= NAVBAR ================= -->
+
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+
     <div class="container">
-        <span class="navbar-brand mb-0 h1">
-            🛡️ QR Quishing Inspector
+
+        <a class="navbar-brand fw-bold" href="#">
+
+            <span class="brand-icon">
+                <i class="bi bi-qr-code-scan"></i>
+            </span>
+
+            QR Quishing Inspector
+
+        </a>
+
+        <span class="security-badge">
+            <i class="bi bi-shield-check"></i>
+            Cybersecurity Tool
         </span>
+
     </div>
+
 </nav>
 
-<div class="container mt-5">
 
-    <div class="card shadow">
+<!-- ================= HERO ================= -->
 
-        <div class="card-body">
+<section class="hero-section">
 
-            <h2 class="text-center">
-                Scan QR Codes Safely
-            </h2>
+    <div class="container">
 
-            <p class="text-center text-muted">
-                Scan a QR code and check whether it is safe before opening it.
-            </p>
+        <div class="row align-items-center g-5">
 
-            <div class="text-center mt-4">
-                <div class="text-center">
+            <div class="col-lg-6">
 
-    <video id="camera" width="100%" autoplay playsinline></video>
-    <canvas id="qrCanvas" style="display: none;"></canvas>
+                <div class="hero-badge">
+                    <i class="bi bi-stars"></i>
+                    AI + Cybersecurity
+                </div>
 
-    <div class="mt-3">
-        <button id="startCamera" class="btn btn-primary">
-            📷 Start Camera
-        </button>
+                <h1>
+                    Don't trust every
+                    <span>QR Code.</span>
+                </h1>
 
-        <button id="stopCamera" class="btn btn-danger" disabled>
-            ⏹ Stop Camera
-        </button>
-    </div>
+                <p class="hero-description">
+                    Scan a QR code before opening its destination.
+                    QR Quishing Inspector analyzes URLs using
+                    cybersecurity rules and machine learning.
+                </p>
 
-    <div id="scanResult" class="alert alert-secondary mt-3">
-        Camera is not started.
-    </div>
+                <div class="hero-features">
 
-</div>
+                    <div>
+                        <i class="bi bi-camera-fill"></i>
+                        Camera Scanner
+                    </div>
+
+                    <div>
+                        <i class="bi bi-robot"></i>
+                        ML Analysis
+                    </div>
+
+                    <div>
+                        <i class="bi bi-shield-fill-check"></i>
+                        Risk Detection
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Scanner Card -->
+
+            <div class="col-lg-6">
+
+                <div class="scanner-card">
+
+                    <div class="scanner-header">
+
+                        <div>
+
+                            <span class="status-dot"></span>
+
+                            <span>
+                                Scanner Ready
+                            </span>
+
+                        </div>
+
+                        <i class="bi bi-camera"></i>
+
+                    </div>
+
+
+                    <!-- Camera -->
+
+                    <div id="cameraContainer"
+                         class="camera-container">
+
+                        <video id="video"
+                               autoplay
+                               playsinline>
+                        </video>
+
+                        <canvas id="canvas"
+                                hidden>
+                        </canvas>
+
+                        <div class="scanner-overlay">
+
+                            <div class="scan-corner top-left"></div>
+                            <div class="scan-corner top-right"></div>
+                            <div class="scan-corner bottom-left"></div>
+                            <div class="scan-corner bottom-right"></div>
+
+                            <div class="scan-line"></div>
+
+                        </div>
+
+                        <div id="cameraMessage"
+                             class="camera-message">
+
+                            <i class="bi bi-camera-video"></i>
+
+                            <span>
+                                Camera preview will appear here
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button id="startCamera"
+                            class="btn btn-primary scanner-btn">
+
+                        <i class="bi bi-camera-fill"></i>
+
+                        Start Camera
+
+                    </button>
+
+
+                    <div class="divider">
+
+                        <span>OR CHECK URL MANUALLY</span>
+
+                    </div>
+
+
+                    <div class="input-group url-input">
+
+                        <span class="input-group-text">
+
+                            <i class="bi bi-link-45deg"></i>
+
+                        </span>
+
+                        <input
+                            type="text"
+                            id="urlInput"
+                            class="form-control"
+                            placeholder="https://example.com"
+                        >
+
+                    </div>
+
+
+                    <button id="analyzeButton"
+                            class="btn btn-analyze">
+
+                        <i class="bi bi-shield-search"></i>
+
+                        Analyze URL
+
+                    </button>
+
+
+                    <p class="privacy-text">
+
+                        <i class="bi bi-lock-fill"></i>
+
+                        Your URL is analyzed locally by this application.
+
+                    </p>
+
+                </div>
 
             </div>
 
@@ -62,110 +232,358 @@
 
     </div>
 
-</div>
-<script>
-    const video = document.getElementById("camera");
-    const startButton = document.getElementById("startCamera");
-    const stopButton = document.getElementById("stopCamera");
-    const scanResult = document.getElementById("scanResult");
+</section>
 
-    let cameraStream = null;
 
-    startButton.addEventListener("click", async () => {
+<!-- ================= RESULT ================= -->
 
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: "environment"
-                },
-                audio: false
-            });
+<section id="resultSection"
+         class="result-section d-none">
 
-            video.srcObject = cameraStream;
+    <div class="container">
 
-            startButton.disabled = true;
-            stopButton.disabled = false;
+        <div class="result-card">
 
-            scanResult.textContent = "Camera started. Point it at a QR code.";
-           scanForQRCode();
+            <div id="resultIcon"
+                 class="result-icon">
 
-        } catch (error) {
+                <i class="bi bi-shield-check"></i>
 
-            console.error(error);
+            </div>
 
-            scanResult.textContent =
-                "Unable to access the camera. Please allow camera permission.";
-        }
-    });
-function scanForQRCode() {
+            <div class="result-content">
 
-    if (!cameraStream) {
-        return;
-    }
+                <span id="resultLabel"
+                      class="result-label">
 
-    // Wait until the camera video has a usable size
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-        requestAnimationFrame(scanForQRCode);
-        return;
-    }
+                    ANALYSIS RESULT
 
-    const canvas = document.getElementById("qrCanvas");
-    const context = canvas.getContext("2d", {
-        willReadFrequently: true
-    });
+                </span>
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+                <h2 id="resultTitle">
+                    Looks Safe
+                </h2>
 
-    context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+                <p id="resultMessage">
+                    Analysis completed.
+                </p>
 
-    const imageData = context.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+                <div class="scanned-url">
 
-    const qrCode = jsQR(
-        imageData.data,
-        imageData.width,
-        imageData.height
-    );
+                    <i class="bi bi-link-45deg"></i>
 
-    if (qrCode) {
+                    <span id="scannedUrl">
+                        -
+                    </span>
 
-        scanResult.textContent =
-            "QR Code detected: " + qrCode.data;
+                </div>
 
-        console.log("QR Code detected:", qrCode.data);
+            </div>
 
-        return;
-    }
+            <div class="risk-score">
 
-    requestAnimationFrame(scanForQRCode);
-}
-   
-    stopButton.addEventListener("click", () => {
+                <div class="score-circle">
 
-        if (cameraStream) {
+                    <span id="riskScore">
+                        0
+                    </span>
 
-            cameraStream.getTracks().forEach(track => track.stop());
+                    <small>
+                        / 100
+                    </small>
 
-            cameraStream = null;
-            video.srcObject = null;
-        }
+                </div>
 
-        startButton.disabled = false;
-        stopButton.disabled = true;
+                <span>
+                    Risk Score
+                </span>
 
-        scanResult.textContent = "Camera stopped.";
-    });
+            </div>
+
+        </div>
+
+
+        <!-- Analysis Details -->
+
+        <div class="row mt-4 g-4">
+
+            <div class="col-md-6">
+
+                <div class="info-card">
+
+                    <div class="info-card-title">
+
+                        <i class="bi bi-robot"></i>
+
+                        Machine Learning
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div id="mlProgress"
+                             class="progress-bar"
+                             style="width: 0%">
+                        </div>
+
+                    </div>
+
+                    <div class="progress-info">
+
+                        <span>
+                            Suspicious probability
+                        </span>
+
+                        <strong id="mlScore">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+                <div class="info-card">
+
+                    <div class="info-card-title">
+
+                        <i class="bi bi-shield-check"></i>
+
+                        Security Rules
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div id="ruleProgress"
+                             class="progress-bar"
+                             style="width: 0%">
+                        </div>
+
+                    </div>
+
+                    <div class="progress-info">
+
+                        <span>
+                            Rule-based risk
+                        </span>
+
+                        <strong id="ruleScore">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Reasons -->
+
+        <div class="reasons-card mt-4">
+
+            <div class="info-card-title">
+
+                <i class="bi bi-search"></i>
+
+                Why was this result given?
+
+            </div>
+
+            <ul id="reasonsList"
+                class="reasons-list">
+            </ul>
+
+        </div>
+
+
+        <button id="scanAgain"
+                class="btn btn-outline-light scan-again">
+
+            <i class="bi bi-arrow-repeat"></i>
+
+            Scan Another QR Code
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ================= HOW IT WORKS ================= -->
+
+<section class="how-section">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <span>
+                HOW IT WORKS
+            </span>
+
+            <h2>
+                Three simple steps
+            </h2>
+
+            <p>
+                Check a QR destination before trusting it.
+            </p>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <div class="col-md-4">
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        01
+                    </div>
+
+                    <i class="bi bi-qr-code-scan"></i>
+
+                    <h4>
+                        Scan
+                    </h4>
+
+                    <p>
+                        Point your camera at a QR code
+                        and let the scanner read its destination.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        02
+                    </div>
+
+                    <i class="bi bi-cpu"></i>
+
+                    <h4>
+                        Analyze
+                    </h4>
+
+                    <p>
+                        The application checks URL characteristics
+                        and sends the URL through the ML classifier.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <div class="step-card">
+
+                    <div class="step-number">
+                        03
+                    </div>
+
+                    <i class="bi bi-shield-check"></i>
+
+                    <h4>
+                        Protect
+                    </h4>
+
+                    <p>
+                        Get a risk score and clear reasons
+                        before visiting the destination.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <div class="container">
+
+        <div class="footer-content">
+
+            <div>
+
+                <strong>
+                    <i class="bi bi-qr-code-scan"></i>
+                    QR Quishing Inspector
+                </strong>
+
+                <p>
+                    A cybersecurity project for detecting
+                    suspicious QR destinations.
+                </p>
+
+            </div>
+
+            <div class="footer-tech">
+
+                <span>Python</span>
+                <span>Flask</span>
+                <span>Machine Learning</span>
+                <span>JavaScript</span>
+
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+
+            <span>
+                TY B.Sc. IT Project
+            </span>
+
+            <span>
+                Built for cybersecurity awareness
+            </span>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+<!-- jsQR -->
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js">
 </script>
+
+
+<!-- Scanner JavaScript -->
+
+<script src="{{ url_for('static', filename='js/scanner.js') }}">
+</script>
+
+
+
 </body>
+
 </html>
