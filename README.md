@@ -1,33 +1,42 @@
 # QR Quishing Inspector
 
-A cybersecurity web application that analyzes QR codes and helps users identify phishing (quishing) attacks.
+QR Quishing Inspector is a cybersecurity web application designed to identify potentially dangerous QR-code destinations.
 
-## Tech Stack
+## Features
+
+- QR code camera scanning
+- URL analysis
+- Machine learning classification
+- Rule-based URL analysis
+- Risk score
+- Safe / Suspicious / Dangerous classification
+- Explanation of detected risks
+- Responsive mobile interface
+
+## Technologies
 
 - Python
 - Flask
 - HTML
 - CSS
-- Bootstrap
 - JavaScript
-- Git
-- GitHub
+- Bootstrap
+- scikit-learn
+- Logistic Regression
+- TF-IDF
 
-## Features (Planned)
+## How It Works
 
-- Upload QR code image
-- Decode QR code
-- Detect phishing URLs
-- Check HTTPS
-- Detect URL shorteners
-- Calculate risk score
-- Generate scan report
-- Scan history
+1. User scans a QR code.
+2. The application extracts the URL.
+3. Security rules inspect the URL.
+4. The machine-learning model analyzes URL patterns.
+5. Both results are combined.
+6. The application displays a risk score and reasons.
 
-## Project Status
 
+Project Status
 🚧 Under Development
 
-## Author
-
+Author
 Devesh Pandey
