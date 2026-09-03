@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-
-from utils.url_analyzer import analyze_url
+from utils.security_rules import analyze_url_security
 from utils.ml_model import predict_url
 
 
@@ -36,7 +35,7 @@ def analyze():
         url = "https://" + url
 
     try:
-        rule_result = analyze_url(url)
+        rule_result = analyze_url_security(url)
         ml_result = predict_url(url)
 
         rule_score = rule_result["score"]

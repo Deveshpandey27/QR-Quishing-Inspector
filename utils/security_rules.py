@@ -142,4 +142,6 @@ def analyze_url_security(url):
         "score": score,
         "risk_level": risk_level,
         "reasons": reasons,
+        "hostname": hostname,
+        "scheme": parsed.scheme,
     }
