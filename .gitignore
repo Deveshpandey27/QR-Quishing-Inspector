@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 model/*.pkl
+# Datasets
+data/raw/*.csv
+data/processed/*.csv
