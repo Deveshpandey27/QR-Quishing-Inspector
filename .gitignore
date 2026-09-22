@@ -1,8 +1,31 @@
+# Virtual Environments
 venv/
-__pycache__/
-*.pyc
+.venv/
+env/
+
+# Python Cache & Bytecode
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment Variables & Secrets
 .env
-model/*.pkl
-# Datasets
+.env.local
+
+# Runtime Data Storage (User data & Scan audits - auto-generated on first run)
+app/data/*.json
+!app/data/.gitkeep
+
+# Large Datasets (> 100MB)
+ml/datasets/raw/*.csv
+ml/datasets/processed/*.csv
 data/raw/*.csv
 data/processed/*.csv
+
+# Temporary files & Scratch
+*.tmp
+*.log
+scratch/

@@ -28,8 +28,68 @@
     <!-- Custom CSS -->
     <link
         rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
+        href="/static/css/style.css?v=2.5"
     >
+
+    <!-- Complete Global Theme Controller (Runs immediately before paint) -->
+    <script>
+        (function () {
+            function getInitialTheme() {
+                try {
+                    const stored = localStorage.getItem("qr_quishing_theme");
+                    if (stored === "light" || stored === "dark") return stored;
+                    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+                } catch (e) {
+                    return "dark";
+                }
+            }
+
+            function applyTheme(theme) {
+                document.documentElement.setAttribute("data-theme", theme);
+                document.documentElement.setAttribute("data-bs-theme", theme);
+                document.documentElement.style.colorScheme = theme;
+                try {
+                    localStorage.setItem("qr_quishing_theme", theme);
+                } catch (e) {}
+
+                const icon = document.getElementById("themeIcon");
+                const btn = document.getElementById("themeToggleBtn");
+                if (icon) {
+                    icon.className = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+                }
+                if (btn) {
+                    const nextMode = theme === "dark" ? "Light" : "Dark";
+                    btn.setAttribute("title", `Switch to ${nextMode} Mode`);
+                    btn.setAttribute("aria-label", `Switch to ${nextMode} Mode`);
+                }
+            }
+
+            window.toggleTheme = function () {
+                const current = document.documentElement.getAttribute("data-theme") || "dark";
+                const next = current === "dark" ? "light" : "dark";
+                applyTheme(next);
+            };
+
+            const init = getInitialTheme();
+            document.documentElement.setAttribute("data-theme", init);
+            document.documentElement.setAttribute("data-bs-theme", init);
+            document.documentElement.style.colorScheme = init;
+
+            document.addEventListener("DOMContentLoaded", function () {
+                applyTheme(document.documentElement.getAttribute("data-theme") || init);
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function (e) {
+                    try {
+                        if (!localStorage.getItem("qr_quishing_theme")) {
+                            applyTheme(e.matches ? "light" : "dark");
+                        }
+                    } catch (err) {}
+                });
+            }
+        })();
+    </script>
 
 </head>
 
@@ -37,24 +97,92 @@
 
 <!-- ================= NAVBAR ================= -->
 
-<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+<nav class="navbar navbar-expand-lg custom-navbar sticky-top">
 
     <div class="container">
 
-        <a class="navbar-brand fw-bold" href="#">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#">
 
             <span class="brand-icon">
                 <i class="bi bi-qr-code-scan"></i>
             </span>
 
-            QR Quishing Inspector
+            <span>QR Quishing Inspector</span>
 
         </a>
 
-        <span class="security-badge">
-            <i class="bi bi-shield-check"></i>
-            Cybersecurity Tool
-        </span>
+        <div class="collapse navbar-collapse justify-content-center d-none d-lg-flex">
+            <ul class="navbar-nav gap-3">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#scannerSection"><i class="bi bi-shield-check me-1"></i> Scanner</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#historySection"><i class="bi bi-clock-history me-1"></i> Scan History</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#howSection"><i class="bi bi-info-circle me-1"></i> How It Works</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="security-status-indicator d-none d-sm-flex">
+                <span class="status-pulse-dot"></span>
+                <span class="status-text">Engine: Active</span>
+            </div>
+
+            <!-- Guest Auth Actions -->
+            <div id="navAuthGuest" class="d-flex align-items-center gap-2">
+                <button type="button" id="navSignInBtn" class="btn btn-sm btn-auth-signin" data-bs-toggle="modal" data-bs-target="#signInModal">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                </button>
+                <button type="button" id="navSignUpBtn" class="btn btn-sm btn-auth-signup" data-bs-toggle="modal" data-bs-target="#signUpModal">
+                    <i class="bi bi-person-plus-fill me-1"></i> Sign Up
+                </button>
+            </div>
+
+            <!-- Authenticated User Profile Pill & Dropdown -->
+            <div id="navAuthUser" class="d-none align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-sm user-profile-btn dropdown-toggle d-flex align-items-center gap-2" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="user-avatar" id="userAvatarText">DA</span>
+                        <span class="user-name d-none d-md-inline" id="navUserName">Demo Analyst</span>
+                        <span class="badge user-role-badge" id="navUserRole">Analyst</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu shadow-lg" aria-labelledby="userMenuButton">
+                        <li class="px-3 py-2 border-bottom border-subtle">
+                            <div class="fw-bold" id="dropdownUserFullName">Demo Analyst</div>
+                            <div class="small text-secondary" id="dropdownUserEmail">analyst@quishing.local</div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="#historySection">
+                                <i class="bi bi-clock-history me-2 text-info"></i> My Audit History
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="#howSection">
+                                <i class="bi bi-info-circle me-2 text-warning"></i> Inspection Engine
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <button type="button" id="signOutBtn" class="dropdown-item py-2 text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <button type="button"
+                    id="themeToggleBtn"
+                    class="theme-toggle-btn"
+                    onclick="toggleTheme()"
+                    title="Toggle light/dark theme"
+                    aria-label="Toggle light/dark theme">
+                <i class="bi bi-sun-fill" id="themeIcon"></i>
+            </button>
+        </div>
 
     </div>
 
@@ -63,7 +191,7 @@
 
 <!-- ================= HERO ================= -->
 
-<section class="hero-section">
+<section id="scannerSection" class="hero-section">
 
     <div class="container">
 
@@ -72,35 +200,33 @@
             <div class="col-lg-6">
 
                 <div class="hero-badge">
-                    <i class="bi bi-stars"></i>
-                    AI + Cybersecurity
+                    <i class="bi bi-shield-check"></i>
+                    Threat Intelligence & Heuristics
                 </div>
 
                 <h1>
-                    Don't trust every
-                    <span>QR Code.</span>
+                    Inspect QR Codes & Detect
+                    <span class="text-accent">Quishing Attacks.</span>
                 </h1>
 
                 <p class="hero-description">
-                    Scan a QR code before opening its destination.
-                    QR Quishing Inspector analyzes URLs using
-                    cybersecurity rules and machine learning.
+                    Scan a QR destination before opening it. QR Quishing Inspector analyzes URLs using cybersecurity heuristics, domain reputation, and machine learning.
                 </p>
 
                 <div class="hero-features">
 
-                    <div>
-                        <i class="bi bi-camera-fill"></i>
+                    <div class="hero-feature-item">
+                        <i class="bi bi-camera"></i>
                         Camera Scanner
                     </div>
 
-                    <div>
-                        <i class="bi bi-robot"></i>
+                    <div class="hero-feature-item">
+                        <i class="bi bi-cpu"></i>
                         ML Analysis
                     </div>
 
-                    <div>
-                        <i class="bi bi-shield-fill-check"></i>
+                    <div class="hero-feature-item">
+                        <i class="bi bi-shield-lock"></i>
                         Risk Detection
                     </div>
 
@@ -117,68 +243,139 @@
 
                     <div class="scanner-header">
 
-                        <div>
+                        <div class="btn-group mode-toggle-group" role="group">
+                            <button type="button" id="tabCameraBtn" class="btn btn-sm btn-outline-primary active">
+                                <i class="bi bi-camera-fill me-1"></i> Live Camera
+                            </button>
+                            <button type="button" id="tabUploadBtn" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Image
+                            </button>
+                        </div>
 
+                        <div class="scanner-status-indicator">
                             <span class="status-dot"></span>
-
-                            <span>
-                                Scanner Ready
-                            </span>
-
-                        </div>
-
-                        <i class="bi bi-camera"></i>
-
-                    </div>
-
-
-                    <!-- Camera -->
-
-                    <div id="cameraContainer"
-                         class="camera-container">
-
-                        <video id="video"
-                               autoplay
-                               playsinline>
-                        </video>
-
-                        <canvas id="canvas"
-                                hidden>
-                        </canvas>
-
-                        <div class="scanner-overlay">
-
-                            <div class="scan-corner top-left"></div>
-                            <div class="scan-corner top-right"></div>
-                            <div class="scan-corner bottom-left"></div>
-                            <div class="scan-corner bottom-right"></div>
-
-                            <div class="scan-line"></div>
-
-                        </div>
-
-                        <div id="cameraMessage"
-                             class="camera-message">
-
-                            <i class="bi bi-camera-video"></i>
-
-                            <span>
-                                Camera preview will appear here
-                            </span>
-
+                            <span id="scannerStatusText">Ready</span>
                         </div>
 
                     </div>
 
 
-                    <button id="startCamera"
-                            class="btn btn-primary scanner-btn">
+                    <!-- Camera View -->
+                    <div id="cameraView">
 
-                        <i class="bi bi-camera-fill"></i>
+                        <div id="cameraContainer"
+                             class="camera-container">
 
-                        Start Camera
+                            <video id="video"
+                                   autoplay
+                                   playsinline>
+                            </video>
 
-                    </button>
+                            <canvas id="canvas"
+                                    hidden>
+                            </canvas>
+
+                            <div class="scanner-overlay">
+
+                                <div class="scan-corner top-left"></div>
+                                <div class="scan-corner top-right"></div>
+                                <div class="scan-corner bottom-left"></div>
+                                <div class="scan-corner bottom-right"></div>
+
+                                <div class="scan-line"></div>
+
+                            </div>
+
+                            <div id="cameraMessage"
+                                 class="camera-message">
+
+                                <i class="bi bi-camera-video"></i>
+
+                                <span>
+                                    Camera preview will appear here
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <button id="startCamera"
+                                class="btn btn-primary scanner-btn">
+
+                            <i class="bi bi-camera-fill"></i>
+
+                            Start Camera
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- Upload Image View -->
+                    <div id="uploadView" class="d-none">
+
+                        <div id="dropZone" class="drop-zone">
+
+                            <input type="file"
+                                   id="qrFileInput"
+                                   accept="image/png, image/jpeg, image/webp, image/bmp"
+                                   class="d-none">
+
+                            <div id="dropZonePrompt" class="drop-zone-prompt">
+
+                                <i class="bi bi-qr-code drop-icon"></i>
+
+                                <div class="drop-text">
+                                    Drag & drop QR image here
+                                </div>
+
+                                <div class="drop-subtext">
+                                    Supports PNG, JPG, WEBP, or BMP
+                                </div>
+
+                                <button type="button"
+                                        id="browseFileBtn"
+                                        class="btn btn-sm btn-outline-primary mt-2">
+
+                                    <i class="bi bi-folder2-open me-1"></i> Browse File
+
+                                </button>
+
+                            </div>
+
+                            <div id="uploadPreviewWrapper"
+                                 class="upload-preview-wrapper d-none">
+
+                                <img id="uploadPreviewImg"
+                                     src=""
+                                     alt="Uploaded QR Code"
+                                     class="upload-preview-img">
+
+                                <div class="d-flex justify-content-center gap-2 mt-3">
+
+                                    <button type="button"
+                                            id="inspectImageBtn"
+                                            class="btn btn-primary scanner-btn">
+
+                                        <i class="bi bi-shield-check me-1"></i> Decode & Inspect
+
+                                    </button>
+
+                                    <button type="button"
+                                            id="removeImageBtn"
+                                            class="btn btn-outline-danger">
+
+                                        <i class="bi bi-trash"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
 
                     <div class="divider">
@@ -216,6 +413,162 @@
                     </button>
 
 
+                    <!-- Quick Test Demos -->
+
+                    <div class="quick-test-box mt-3">
+
+                        <div class="quick-test-header d-flex align-items-center justify-content-between mb-2">
+
+                            <span class="quick-test-title">
+                                <i class="bi bi-lightning-charge-fill text-warning me-1"></i>
+                                Quick Test Targets
+                            </span>
+
+                            <small class="text-secondary">Click to inspect instantly</small>
+
+                        </div>
+
+                        <div class="quick-test-chips d-flex flex-wrap gap-2">
+
+                            <button type="button"
+                                    class="btn quick-chip chip-safe"
+                                    data-url="https://google.com"
+                                    title="Legitimate authoritative domain (Zero risk)">
+                                <i class="bi bi-check-circle-fill me-1"></i> Safe Portal
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-safe"
+                                    data-url="https://accounts.google.com/login"
+                                    title="Legitimate authentication workflow (Protected by Whitelist)">
+                                <i class="bi bi-shield-check me-1"></i> Auth Login
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-warning"
+                                    data-url="https://bit.ly/secure-account"
+                                    title="URL Shortener disguising destination">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Shortener
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://paypal.com.account-verify.xyz/login"
+                                    title="Subdomain Brand Impersonation attack">
+                                <i class="bi bi-shield-x me-1"></i> Brand Impersonation
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="http://192.168.1.50/login/verify"
+                                    title="Direct Raw IP host with unencrypted HTTP">
+                                <i class="bi bi-hdd-network-fill me-1"></i> IP Host
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="http://192.168.1.20/login/verify/account"
+                                    title="Reported Malicious Quishing Campaign (Threat Intel 3 Matches)">
+                                <i class="bi bi-shield-slash-fill me-1"></i> Reported Threat (3 Hits)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-warning"
+                                    data-url="WIFI:T:WPA;S=HomeNetwork;P=password;;"
+                                    title="Wi-Fi configuration payload with network credentials">
+                                <i class="bi bi-wifi me-1"></i> Wi-Fi (WPA)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-warning"
+                                    data-url="mailto:alert@bank-verify.xyz?subject=Urgent+Action&body=Visit+https://example.xyz/login"
+                                    title="Email draft with embedded quishing link">
+                                <i class="bi bi-envelope-at me-1"></i> Email (Mailto)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-safe"
+                                    data-url="tel:+18005550199"
+                                    title="Phone number dialer target">
+                                <i class="bi bi-telephone me-1"></i> Phone (+1-800)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="BEGIN:VCARD&#10;VERSION:3.0&#10;FN:HR Support&#10;URL:https://example.xyz/login&#10;END:VCARD"
+                                    title="vCard contact card with embedded website quishing link">
+                                <i class="bi bi-person-badge me-1"></i> vCard (Contact)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-safe"
+                                    data-url="Meeting room 402 - Access code: 884192"
+                                    title="Plain text QR payload without URLs">
+                                <i class="bi bi-chat-left-text me-1"></i> Plain Text
+                            </button>
+
+                            <!-- Section 13: Anti-Obfuscation Detection Chips -->
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://xn--pypal-4ve.com/signin"
+                                    title="Punycode / IDN Homograph domain visually resembling paypal.com">
+                                <i class="bi bi-translate me-1"></i> Punycode (xn--)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="http://0x7f000001/admin/login"
+                                    title="Hexadecimal alternative IP address representation">
+                                <i class="bi bi-hash me-1"></i> Hex IP (0x7f000001)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-warning"
+                                    data-url="https://login.company.com/redirect?url=https://phishing.xyz/token"
+                                    title="Nested URL concealed inside parameter payload">
+                                <i class="bi bi-link-45deg me-1"></i> Nested URL (?url=)
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-warning"
+                                    data-url="https://secure-portal.net/%252e%252e%252fadmin"
+                                    title="Double-encoded path traversal filter evasion">
+                                <i class="bi bi-code-square me-1"></i> Double Encoded (%25)
+                            </button>
+
+                            <!-- Section 14: Brand Impersonation Detection Chips -->
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://paypa1-login.com"
+                                    title="Brand Impersonation via Leetspeak: '1' for 'l'">
+                                <i class="bi bi-shield-slash me-1"></i> paypa1-login.com
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://micr0soft-security.com"
+                                    title="Brand Impersonation via Leetspeak: '0' for 'o' with security keyword">
+                                <i class="bi bi-shield-slash me-1"></i> micr0soft-security.com
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://g00gle-verification.com"
+                                    title="Brand Impersonation via Leetspeak: '00' for 'oo' with verification keyword">
+                                <i class="bi bi-shield-slash me-1"></i> g00gle-verification.com
+                            </button>
+
+                            <button type="button"
+                                    class="btn quick-chip chip-danger"
+                                    data-url="https://google-security-example.com"
+                                    title="Compound unauthorized brand domain with security keyword">
+                                <i class="bi bi-shield-slash me-1"></i> google-security-example.com
+                            </button>
+                        </div>
+
+                    </div>
+
+
                     <p class="privacy-text">
 
                         <i class="bi bi-lock-fill"></i>
@@ -241,6 +594,18 @@
          class="result-section d-none">
 
     <div class="container">
+
+        <!-- QR CONTENT TYPE Banner -->
+        <div id="payloadTypeBanner" class="payload-type-banner d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 mb-3 rounded-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="payload-type-title text-uppercase fw-bold"><i class="bi bi-qr-code-scan me-1 text-primary"></i> QR CONTENT TYPE:</span>
+                <span id="payloadTypeBadge" class="badge payload-type-badge fs-6 px-3 py-1 bg-primary">URL</span>
+            </div>
+            <div id="payloadSecurityWarningBox" class="d-flex align-items-center gap-2">
+                <i id="payloadWarningIcon" class="bi bi-shield-check text-success"></i>
+                <span id="payloadSecurityWarningText" class="small fw-semibold text-secondary">Standard web destination</span>
+            </div>
+        </div>
 
         <div class="result-card">
 
@@ -268,13 +633,26 @@
                     Analysis completed.
                 </p>
 
-                <div class="scanned-url">
+                <div class="scanned-url-container d-flex align-items-center flex-wrap gap-2">
 
-                    <i class="bi bi-link-45deg"></i>
+                    <div class="scanned-url">
 
-                    <span id="scannedUrl">
-                        -
-                    </span>
+                        <i class="bi bi-link-45deg"></i>
+
+                        <span id="scannedUrl">
+                            -
+                        </span>
+
+                    </div>
+
+                    <button type="button"
+                            id="copyUrlBtn"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="Copy URL to clipboard">
+
+                        <i class="bi bi-clipboard"></i> Copy
+
+                    </button>
 
                 </div>
 
@@ -298,6 +676,742 @@
                     Risk Score
                 </span>
 
+                <span id="heroRiskLevelBadge" class="badge risk-level-badge mt-1">
+                    LOW
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Actionable Guidance Banner -->
+
+        <div id="guidanceBanner" class="guidance-banner mt-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-3">
+
+                <div id="guidanceIconBox" class="guidance-icon-box">
+                    <i id="guidanceIcon" class="bi bi-shield-check"></i>
+                </div>
+
+                <div>
+                    <div id="guidanceTitle" class="guidance-title">Safe Destination Verified</div>
+                    <div id="guidanceText" class="guidance-text">This URL exhibits authentic characteristics and passes all cybersecurity heuristics.</div>
+                </div>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button"
+                        id="downloadPdfReportBtn"
+                        class="btn btn-sm btn-primary d-flex align-items-center gap-2 btn-report-action"
+                        title="Download formal PDF Security Analysis Report">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                    <span>Download PDF Report</span>
+                </button>
+
+                <button type="button"
+                        id="viewTextReportBtn"
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 btn-report-action"
+                        title="View formatted Security Analysis Report">
+                    <i class="bi bi-file-text"></i>
+                    <span>View Security Report</span>
+                </button>
+
+                <button type="button"
+                        id="copyReportBtn"
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                        title="Export incident report to clipboard">
+                    <i class="bi bi-clipboard-data"></i>
+                    <span>Copy Incident Summary</span>
+                </button>
+            </div>
+
+        </div>
+
+
+        <!-- ================= INLINE EXPANDABLE SECURITY REPORT CARD ================= -->
+        <div id="inlineSecurityReportCard" class="inline-security-report-card mt-3 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text-fill text-primary fs-4"></i>
+                    <h5 class="mb-0 fw-bold">Security Analysis Report</h5>
+                    <span class="badge bg-secondary-subtle text-secondary small">Incident Specification</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" id="copyInlineReportBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-clipboard"></i> Copy Text
+                    </button>
+                    <button type="button" id="inlineDownloadPdfBtn" class="btn btn-sm btn-primary">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+                    </button>
+                    <button type="button" id="closeInlineReportBtn" class="btn btn-sm btn-outline-secondary" title="Collapse Report">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <pre id="inlineSecurityReportPre" class="security-report-pre p-3 rounded-3 mb-0"></pre>
+        </div>
+
+
+        <!-- ================= FEATURE 17: WHAT SHOULD I DO? (ACTIONABLE SECURITY RECOMMENDATION) ================= -->
+        <div id="whatShouldIDoCard" class="what-should-i-do-card mt-4 p-4 rounded-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="whatShouldIDoIconBox" class="what-icon-box p-2 rounded-3 bg-success-subtle text-success">
+                        <i id="whatShouldIDoIcon" class="bi bi-check-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                            <i class="bi bi-compass me-1 text-primary"></i> Actionable Security Guidance
+                        </span>
+                        <h4 class="mb-0 fw-bold" id="whatShouldIDoTitle">What should I do?</h4>
+                    </div>
+                </div>
+                <div>
+                    <span id="whatShouldIDoBadge" class="badge fs-6 px-3 py-2 bg-success">✓ LOW RISK</span>
+                </div>
+            </div>
+
+            <div class="what-should-i-do-body p-3 rounded-3 bg-surface border border-subtle">
+                <div id="whatShouldIDoLead" class="fw-bold fs-6 mb-2">
+                    No significant indicators were detected.
+                </div>
+                <div class="recommendation-lead-label small text-secondary fw-bold text-uppercase mb-1">
+                    Recommendation:
+                </div>
+                <div id="whatShouldIDoAction" class="fw-semibold text-secondary">
+                    Still verify the destination before entering credentials or payment information.
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= FEATURE 15: USER EDUCATION (WHY IS THIS DANGEROUS?) ================= -->
+        <div id="userEducationCard" class="user-education-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="edu-icon-box bg-danger-subtle text-danger p-2 rounded-3">
+                        <i class="bi bi-shield-exclamation fs-3"></i>
+                    </div>
+                    <div>
+                        <span class="small text-danger fw-bold text-uppercase d-block mb-1">
+                            <i class="bi bi-mortarboard-fill me-1"></i> Security Education & Awareness
+                        </span>
+                        <h4 class="mb-0 fw-bold text-danger" id="userEducationHeading">WHY IS THIS DANGEROUS?</h4>
+                    </div>
+                </div>
+                <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1">Quishing Advisory</span>
+            </div>
+
+            <div class="user-education-body p-3 rounded-3 bg-surface border border-danger-subtle">
+                <p id="userEducationText" class="fw-semibold text-secondary mb-3">
+                    QR phishing attacks can hide the destination URL from the user until the QR code is scanned.
+                </p>
+
+                <div class="education-warning-box p-3 rounded-3 mb-3 bg-danger-subtle border border-danger-subtle">
+                    <div class="fw-bold text-danger mb-2">
+                        <i class="bi bi-slash-circle-fill me-2"></i>Never enter:
+                    </div>
+                    <ul id="userEducationProhibitedList" class="education-prohibited-list mb-0 ps-3">
+                        <li>• passwords</li>
+                        <li>• OTPs</li>
+                        <li>• banking credentials</li>
+                        <li>• card information</li>
+                    </ul>
+                </div>
+
+                <div id="userEducationNote" class="small text-secondary fw-semibold">
+                    unless you have verified the destination.
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= SPECIALIZED QR PAYLOAD DETAIL CARDS ================= -->
+
+        <!-- Wi-Fi Network Credentials & Security Card -->
+        <div id="wifiPayloadCard" class="payload-detail-card wifi-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="payload-card-icon-box bg-warning-subtle text-warning p-2 rounded-3">
+                        <i class="bi bi-wifi fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">Wi-Fi Configuration Payload</h5>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="badge bg-warning text-dark" id="wifiAuthBadge">WPA</span>
+                            <span class="badge bg-secondary d-none" id="wifiHiddenBadge">Hidden Network</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="security-warning-pill text-warning small fw-bold p-2 rounded bg-warning-subtle border border-warning">
+                    <i class="bi bi-shield-lock-fill me-1"></i> This QR code contains network credentials.
+                </div>
+            </div>
+
+            <!-- Credentials Box -->
+            <div class="wifi-credentials-grid p-3 rounded mb-3 bg-surface-subtle border border-subtle">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small text-secondary fw-bold text-uppercase d-block mb-1">Network Name (SSID):</label>
+                        <div id="wifiSsidVal" class="fs-5 fw-bold font-mono text-primary">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="small text-secondary fw-bold text-uppercase mb-0">Network Password:</label>
+                            <button type="button" id="toggleWifiPwBtn" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Toggle password visibility">
+                                <i class="bi bi-eye"></i> Show
+                            </button>
+                        </div>
+                        <div id="wifiPasswordVal" class="fs-5 fw-bold font-mono text-danger">••••••••</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wifi-privacy-advisory p-2 rounded small text-secondary bg-surface-subtle border border-subtle">
+                <i class="bi bi-shield-exclamation text-warning me-1"></i>
+                <strong>Credential Protection:</strong> Sensitive Wi-Fi network passwords are automatically masked and never stored in plaintext audit logs.
+            </div>
+        </div>
+
+        <!-- Email Payload Card -->
+        <div id="emailPayloadCard" class="payload-detail-card email-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="payload-card-icon-box bg-info-subtle text-info p-2 rounded-3">
+                    <i class="bi bi-envelope-at fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">Email Message Payload</h5>
+                    <span class="badge bg-info text-dark mt-1">Direct Mail Draft</span>
+                </div>
+            </div>
+            <div class="email-details-box p-3 rounded bg-surface-subtle border border-subtle">
+                <div class="mb-2">
+                    <span class="small text-secondary fw-bold text-uppercase">Recipient:</span>
+                    <span id="emailRecipientVal" class="fw-bold ms-2 text-primary font-mono">-</span>
+                </div>
+                <div class="mb-2">
+                    <span class="small text-secondary fw-bold text-uppercase">Subject:</span>
+                    <span id="emailSubjectVal" class="ms-2 fw-semibold">-</span>
+                </div>
+                <div class="mb-2" id="emailBodyContainer">
+                    <span class="small text-secondary fw-bold text-uppercase d-block mb-1">Message Body:</span>
+                    <div id="emailBodyVal" class="p-2 rounded bg-surface font-mono small text-secondary">-</div>
+                </div>
+                <div id="emailEmbeddedUrlsBox" class="mt-2 p-2 rounded bg-danger-subtle text-danger small d-none">
+                    <i class="bi bi-link-45deg me-1"></i>
+                    <strong>Embedded URL Detected:</strong> <span id="emailEmbeddedUrlsVal" class="font-mono"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phone Number Payload Card -->
+        <div id="phonePayloadCard" class="payload-detail-card phone-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="payload-card-icon-box bg-success-subtle text-success p-2 rounded-3">
+                        <i class="bi bi-telephone fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">Phone Number Dialer Payload</h5>
+                        <span class="badge bg-success mt-1">Direct Dial</span>
+                    </div>
+                </div>
+                <a id="phoneDialBtn" href="#" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-telephone-outbound me-1"></i> Dial Target
+                </a>
+            </div>
+            <div class="p-3 rounded bg-surface-subtle border border-subtle d-flex align-items-center justify-content-between">
+                <div>
+                    <label class="small text-secondary fw-bold text-uppercase">Telephone Target:</label>
+                    <div id="phoneNumberVal" class="fs-4 fw-bold font-mono text-primary">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- vCard / Contact Payload Card -->
+        <div id="vcardPayloadCard" class="payload-detail-card vcard-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="payload-card-icon-box bg-primary-subtle text-primary p-2 rounded-3">
+                    <i class="bi bi-person-lines-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">vCard Contact Card Payload</h5>
+                    <span class="badge bg-primary mt-1">Contact Profile</span>
+                </div>
+            </div>
+            <div class="vcard-details-box p-3 rounded bg-surface-subtle border border-subtle">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <span class="small text-secondary fw-bold text-uppercase">Name:</span>
+                        <div id="vcardNameVal" class="fw-bold">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="small text-secondary fw-bold text-uppercase">Organization:</span>
+                        <div id="vcardOrgVal" class="text-secondary">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="small text-secondary fw-bold text-uppercase">Phone:</span>
+                        <div id="vcardPhoneVal" class="font-mono">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="small text-secondary fw-bold text-uppercase">Email:</span>
+                        <div id="vcardEmailVal" class="text-primary font-mono">-</div>
+                    </div>
+                    <div class="col-12" id="vcardUrlContainer">
+                        <span class="small text-secondary fw-bold text-uppercase">Embedded Website Link (Quishing Vector):</span>
+                        <div id="vcardUrlVal" class="font-mono text-danger fw-bold">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plain Text Payload Card -->
+        <div id="textPayloadCard" class="payload-detail-card text-card mt-4 p-4 rounded-3 d-none">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="payload-card-icon-box bg-secondary-subtle text-secondary p-2 rounded-3">
+                    <i class="bi bi-chat-left-text fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">Plain Text Payload</h5>
+                    <span class="badge bg-secondary mt-1">Non-URL Text Data</span>
+                </div>
+            </div>
+            <div class="p-3 rounded bg-surface-subtle border border-subtle">
+                <label class="small text-secondary fw-bold text-uppercase mb-1">Payload Content:</label>
+                <div id="textContentVal" class="p-2 rounded bg-surface font-mono small text-break text-secondary">-</div>
+            </div>
+        </div>
+
+
+        <!-- URL Shortener Threat Warning Card -->
+        <div id="shortenerAlertCard" class="shortener-alert-card mt-4 d-none">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="shortener-alert-icon-box">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="shortener-alert-title mb-0">⚠ URL SHORTENER DETECTED</h5>
+                    <span class="badge bg-warning text-dark mt-1" id="shortenerServiceBadge">Shortened URL</span>
+                </div>
+            </div>
+            <div class="shortener-alert-body mt-2">
+                <p class="mb-1 fw-bold shortener-lead">The QR code points to a shortened URL.</p>
+                <p class="mb-2 shortener-desc">Destination cannot be trusted based only on the visible short URL.</p>
+                
+                <div id="shortenerTargetBox" class="shortener-target-box d-none p-2 mt-2 rounded">
+                    <span class="small text-secondary fw-semibold"><i class="bi bi-arrow-return-right me-1"></i> Safe Controlled Redirect Target:</span>
+                    <div id="shortenerTargetUrl" class="font-mono small text-break text-info fw-bold mt-1">-</div>
+                </div>
+
+                <div class="shortener-note mt-2 small text-secondary">
+                    <i class="bi bi-shield-check text-primary me-1"></i>
+                    <em>Quishing Protection: Shortened links frequently mask fraudulent or malicious phishing landing pages.</em>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 13: Anti-Obfuscation Detection Card -->
+        <div id="obfuscationAlertCard" class="obfuscation-alert-card mt-4 d-none p-4 rounded-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="obfuscation-icon-box bg-danger-subtle text-danger p-2 rounded-3">
+                        <i class="bi bi-eye-slash-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-danger" id="obfuscationAlertTitle">⚠ POSSIBLE URL OBFUSCATION</h5>
+                        <div class="d-flex align-items-center gap-2 mt-1" id="obfuscationBadgesContainer">
+                            <span class="badge bg-danger">Obfuscation Detected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="obfuscation-severity-pill text-danger small fw-bold p-2 rounded bg-danger-subtle border border-danger">
+                    <i class="bi bi-shield-exclamation me-1"></i> Evasion Technique Flagged
+                </div>
+            </div>
+
+            <div class="obfuscation-alert-body">
+                <p id="obfuscationAlertMessage" class="fw-bold fs-6 text-danger mb-3">
+                    The domain contains a Unicode/punycode representation that may visually resemble another domain.
+                </p>
+
+                <!-- Obfuscation Technical Breakdowns Grid -->
+                <div class="obfuscation-breakdown-grid p-3 rounded mb-2 bg-surface-subtle border border-subtle">
+                    <div class="row g-3">
+                        <!-- Punycode Homograph Resemblance Box -->
+                        <div class="col-md-6 d-none" id="obfuscationResemblanceBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-translate text-danger me-1"></i> Visual Homograph Resemblance:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-danger-subtle">
+                                <span class="small text-secondary d-block">Visually Mimics:</span>
+                                <span id="obfuscationResemblanceVal" class="fs-5 fw-bold font-mono text-danger">-</span>
+                                <small class="text-secondary d-block mt-1">IDN Homograph attack designed to deceive human visual inspection.</small>
+                            </div>
+                        </div>
+
+                        <!-- Alternative IP Representation Box -->
+                        <div class="col-md-6 d-none" id="obfuscationIpBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-hash text-warning me-1"></i> Alternative IP Representation:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-warning-subtle">
+                                <span class="small text-secondary d-block">Canonical Resolved IPv4:</span>
+                                <span id="obfuscationIpVal" class="fs-5 fw-bold font-mono text-warning">-</span>
+                                <small class="text-secondary d-block mt-1">Hexadecimal/DWORD integer notation used to evade string domain filters.</small>
+                            </div>
+                        </div>
+
+                        <!-- Nested URL Target Box -->
+                        <div class="col-12 d-none" id="obfuscationNestedBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-box-arrow-up-right text-info me-1"></i> Concealed Nested Destination URL:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-info-subtle">
+                                <span class="small text-secondary d-block">Hidden Forwarding Target:</span>
+                                <span id="obfuscationNestedVal" class="fs-6 fw-bold font-mono text-break text-info">-</span>
+                                <small class="text-secondary d-block mt-1">Open-redirect or parameter payload concealment vector.</small>
+                            </div>
+                        </div>
+
+                        <!-- Evasive URL Encoding Box -->
+                        <div class="col-12 d-none" id="obfuscationEncodingBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-code-square text-secondary me-1"></i> Decoded Canonical Representation:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-subtle">
+                                <span class="small text-secondary d-block">Normalized Destination:</span>
+                                <span id="obfuscationEncodingVal" class="small font-mono text-break text-primary fw-semibold">-</span>
+                                <small class="text-secondary d-block mt-1">Double percent-encoding or obfuscated directory traversal sequence resolved.</small>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Hop Redirect Chain Box -->
+                        <div class="col-12 d-none" id="obfuscationChainBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-arrow-repeat text-warning me-1"></i> Multi-Hop Redirect Chain:
+                            </span>
+                            <div id="obfuscationChainVal" class="p-2 rounded bg-surface font-mono small text-break">
+                                <!-- Hop steps injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="obfuscation-security-advisory p-2 rounded small text-secondary bg-surface-subtle border border-subtle">
+                    <i class="bi bi-shield-exclamation text-danger me-1"></i>
+                    <strong>Anti-Obfuscation Advisory:</strong> Obfuscation techniques are deliberately deployed to disguise destination authenticity and bypass security gateways. Do not proceed to this link.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 14: Brand Impersonation Alert Card -->
+        <div id="brandImpersonationAlertCard" class="brand-impersonation-card mt-4 d-none p-4 rounded-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="brand-imp-icon-box bg-danger-subtle text-danger p-2 rounded-3">
+                        <i class="bi bi-shield-slash-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-danger" id="brandAlertHeading">⚠ POSSIBLE BRAND IMPERSONATION</h5>
+                        <div class="d-flex align-items-center gap-2 mt-1" id="brandBadgesContainer">
+                            <span class="badge bg-danger" id="brandDetectedPill">Brand Mimicry Flagged</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="brand-severity-pill text-danger small fw-bold p-2 rounded bg-danger-subtle border border-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Unauthorized Corporate Domain
+                </div>
+            </div>
+
+            <div class="brand-imp-alert-body">
+                <!-- Result Structure exactly per prompt -->
+                <div class="brand-exact-output-box p-3 rounded mb-3 bg-surface border border-danger-subtle">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                Detected brand-like term:
+                            </span>
+                            <div class="fs-4 fw-bold text-danger font-mono" id="detectedBrandTermVal">Google</div>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                Actual domain:
+                            </span>
+                            <div class="fs-5 fw-bold text-warning font-mono text-break" id="actualDomainNameVal">google-security-example.com</div>
+                        </div>
+                        <div class="col-12 border-top border-subtle pt-2">
+                            <div class="fw-bold fs-6 text-danger" id="brandWarningMessageVal">
+                                The domain is not an official Google domain.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Details Breakdown -->
+                <div class="brand-breakdown-grid p-3 rounded mb-2 bg-surface-subtle border border-subtle">
+                    <div class="row g-3">
+                        <!-- Character Substitutions / Leetspeak -->
+                        <div class="col-md-6 d-none" id="brandSubstitutionsBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-spellcheck text-warning me-1"></i> Character Substitutions (Leetspeak):
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-subtle" id="brandSubstitutionsList">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <small class="text-secondary d-block mt-1">Digits/homoglyphs swapped to evade basic string filters.</small>
+                        </div>
+
+                        <!-- Typosquatting Similarity Score -->
+                        <div class="col-md-6 d-none" id="brandSimilarityBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-percent text-info me-1"></i> Typosquatting Similarity:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-subtle d-flex align-items-center justify-content-between">
+                                <span class="small text-secondary">Similarity Ratio:</span>
+                                <span id="brandSimilarityVal" class="fs-5 fw-bold font-mono text-info">95.0%</span>
+                            </div>
+                            <small class="text-secondary d-block mt-1">Damerau-Levenshtein distance detects visual keyboard typosquatting.</small>
+                        </div>
+
+                        <!-- Misleading Subdomain Alert -->
+                        <div class="col-12 d-none" id="brandMisleadingSubdomainBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-box-arrow-in-up-right text-danger me-1"></i> Misleading Subdomain Deception:
+                            </span>
+                            <div class="p-2 rounded bg-surface border border-danger-subtle">
+                                <span class="small text-secondary d-block">Deceptive Subdomain Host:</span>
+                                <span id="brandSubdomainVal" class="fs-6 fw-bold font-mono text-danger">-</span>
+                                <small class="text-secondary d-block mt-1">Attacker places a reputable brand name in subdomains to trick mobile users.</small>
+                            </div>
+                        </div>
+
+                        <!-- Verified Official Domains Sample -->
+                        <div class="col-12" id="brandOfficialSampleBox">
+                            <span class="small text-secondary fw-bold text-uppercase d-block mb-1">
+                                <i class="bi bi-patch-check-fill text-success me-1"></i> Authorized Official Domains for this Brand:
+                            </span>
+                            <div class="d-flex flex-wrap gap-2 mt-1" id="brandOfficialDomainsPills">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="brand-advisory-note mt-2 p-2 rounded small text-secondary bg-surface-subtle border border-subtle">
+                    <i class="bi bi-shield-lock-fill text-danger me-1"></i>
+                    <strong>Anti-Phishing Advisory:</strong> Legitimate organizations will never ask you to authenticate credentials or provide payment information on non-official domain names.
+                </div>
+            </div>
+        </div>
+
+        <!-- Combined Risk Engine (The Central Brain) Card -->
+        <div id="combinedRiskEngineCard" class="combined-brain-card mt-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="brain-card-title">
+                    <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                    Combined Risk Engine (Decision Brain)
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary-subtle text-secondary small">Empirical Weight Calibration</span>
+                    <span id="brainRiskBadge" class="badge risk-level-badge-danger">Risk Level: HIGH</span>
+                </div>
+            </div>
+
+            <!-- Convergence Diagram Architecture Flow -->
+            <div class="brain-flow-wrapper mb-4">
+                <div class="brain-flow-container">
+                    <div class="brain-pillar-node node-rule">
+                        <div class="pillar-weight-tag">Weight: 35%</div>
+                        <div class="pillar-icon"><i class="bi bi-shield-check"></i></div>
+                        <div class="pillar-name">Rule Engine</div>
+                        <div id="diagramRuleScore" class="pillar-score-text">0/100</div>
+                    </div>
+
+                    <div class="brain-convergence-center">
+                        <div class="convergence-arrow-top"><i class="bi bi-arrow-down"></i></div>
+                        <div class="brain-hub-node">
+                            <i class="bi bi-cpu-fill hub-icon"></i>
+                            <div class="hub-label">Risk Engine</div>
+                            <div class="hub-sub">Central Brain</div>
+                        </div>
+                        <div class="convergence-arrow-bottom"><i class="bi bi-arrow-up"></i></div>
+                    </div>
+
+                    <div class="brain-pillar-node node-ml">
+                        <div class="pillar-weight-tag">Weight: 45%</div>
+                        <div class="pillar-icon"><i class="bi bi-robot"></i></div>
+                        <div class="pillar-name">ML Model</div>
+                        <div id="diagramMlScore" class="pillar-score-text">0%</div>
+                    </div>
+
+                    <div class="brain-pillar-node node-domain">
+                        <div class="pillar-weight-tag">Weight: 20%</div>
+                        <div class="pillar-icon"><i class="bi bi-globe2"></i></div>
+                        <div class="pillar-name">Domain Signals</div>
+                        <div id="diagramDomainScore" class="pillar-score-text">0/100</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Score Triad Metric Display -->
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="triad-metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="triad-label"><i class="bi bi-shield-check text-primary me-1"></i> Rule Score:</span>
+                            <strong id="brainRuleValue" class="triad-val text-primary">0 / 100</strong>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div id="brainRuleBar" class="progress-bar bg-primary" style="width: 0%"></div>
+                        </div>
+                        <div class="triad-subtext mt-1 text-secondary small">
+                            Heuristic penalties & brand pattern checks (35% weight)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="triad-metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="triad-label"><i class="bi bi-robot text-danger me-1"></i> ML Probability:</span>
+                            <strong id="brainMlValue" class="triad-val text-danger">0%</strong>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div id="brainMlBar" class="progress-bar bg-danger" style="width: 0%"></div>
+                        </div>
+                        <div class="triad-subtext mt-1 text-secondary small">
+                            Supervised 24-feature estimator (45% weight)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="triad-metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="triad-label"><i class="bi bi-globe2 text-warning me-1"></i> Domain Signals:</span>
+                            <strong id="brainDomainValue" class="triad-val text-warning">0 / 100</strong>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div id="brainDomainBar" class="progress-bar bg-warning" style="width: 0%"></div>
+                        </div>
+                        <div class="triad-subtext mt-1 text-secondary small">
+                            WHOIS age, DNS records & TLS certificate (20% weight)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Composite Brain Synthesis Footer -->
+            <div class="brain-synthesis-box mt-3 p-3 rounded d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="brain-final-score-display">
+                        <span class="small text-secondary d-block">Final Risk Score:</span>
+                        <span id="brainFinalScore" class="fs-4 fw-bold text-danger">0</span>
+                        <span class="text-secondary small">/ 100</span>
+                    </div>
+                    <div class="border-start border-subtle ps-3">
+                        <span class="small text-secondary d-block">Risk Level:</span>
+                        <span id="brainRiskLevelText" class="badge risk-level-badge-danger fs-6">HIGH</span>
+                    </div>
+                </div>
+
+                <div class="small text-secondary text-end">
+                    <div><i class="bi bi-sliders text-success me-1"></i> <strong>Validation Calibration:</strong> 35% Rules + 45% ML + 20% Domain Signals</div>
+                    <div class="text-muted">Empirically calibrated to minimize Brier error and prevent arbitrary bias</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Threat Intelligence Card -->
+        <div id="threatIntelCard" class="threat-intel-card mt-4 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="threat-card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-slash-fill text-danger fs-4"></i>
+                    <h5 class="mb-0 fw-bold">Threat Intelligence</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary-subtle text-secondary small">5 Global Feeds</span>
+                    <span id="threatMaliciousBadge" class="badge bg-danger">Known Malicious: YES</span>
+                </div>
+            </div>
+
+            <!-- Primary Metric Duo: Known Malicious URL & Threat Database Matches -->
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <div class="threat-metric-box p-3 rounded d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-secondary small text-uppercase fw-semibold d-block">Known malicious URL:</span>
+                            <span class="small text-muted">Global threat reputation</span>
+                        </div>
+                        <span id="threatKnownMaliciousVal" class="fs-4 fw-bold font-mono text-danger">YES</span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="threat-metric-box p-3 rounded d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-secondary small text-uppercase fw-semibold d-block">Threat database matches:</span>
+                            <span class="small text-muted">Independent feed hits</span>
+                        </div>
+                        <div class="d-flex align-items-baseline gap-1">
+                            <span id="threatMatchesCountVal" class="fs-4 fw-bold font-mono text-danger">3</span>
+                            <span class="text-secondary small">/ 5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning or Clean Alert Banner -->
+            <div id="threatWarningBanner" class="threat-warning-banner p-3 rounded mb-3 d-flex align-items-start gap-3">
+                <i id="threatAlertIcon" class="bi bi-exclamation-triangle-fill text-danger fs-4 flex-shrink-0 mt-1"></i>
+                <div>
+                    <div id="threatAlertTitle" class="fw-bold threat-lead-text">⚠ External intelligence indicates this URL has been reported.</div>
+                    <div id="threatAlertDesc" class="text-secondary small mt-1">Independent cybersecurity feeds have flagged this destination as an active phishing or malicious campaign.</div>
+                </div>
+            </div>
+
+            <!-- Provider Badges Grid -->
+            <div class="threat-providers-header mb-2 d-flex align-items-center justify-content-between">
+                <span class="small text-secondary fw-bold text-uppercase"><i class="bi bi-hdd-network me-1"></i> Threat Feed Providers:</span>
+                <small class="text-secondary">Live API & Curated Telemetry</small>
+            </div>
+            <div id="threatProvidersGrid" class="row g-2">
+                <!-- Dynamically rendered provider pills -->
+            </div>
+        </div>
+
+        <!-- Domain & Network Intelligence Grid -->
+
+        <div class="row mt-4 g-2 g-md-3">
+
+            <div class="col-6 col-lg-3">
+                <div class="soc-intel-card">
+                    <div class="soc-label"><i class="bi bi-lock me-1"></i> Transport Protocol</div>
+                    <div id="intelProtocol" class="soc-value text-success">HTTPS (Encrypted)</div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="soc-intel-card">
+                    <div class="soc-label"><i class="bi bi-globe2 me-1"></i> Host Structure</div>
+                    <div id="intelHostType" class="soc-value">Registered Domain</div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="soc-intel-card">
+                    <div class="soc-label"><i class="bi bi-patch-check me-1"></i> Authority Status</div>
+                    <div id="intelAuthority" class="soc-value text-primary">Reputable Authority</div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="soc-intel-card">
+                    <div class="soc-label"><i class="bi bi-cpu me-1"></i> ML Model Engine</div>
+                    <div id="intelModel" class="soc-value soc-model-badge">HistGradientBoosting</div>
+                </div>
             </div>
 
         </div>
@@ -311,34 +1425,89 @@
 
                 <div class="info-card">
 
-                    <div class="info-card-title">
-
-                        <i class="bi bi-robot"></i>
-
-                        Machine Learning
-
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="info-card-title mb-0">
+                            <i class="bi bi-robot me-1"></i>
+                            Machine Learning
+                        </div>
+                        <span id="mlActiveModelBadge" class="badge bg-primary">HistGradientBoosting</span>
                     </div>
 
-                    <div class="progress">
+                    <!-- Dual Split Probability Bar -->
+                    <div class="probability-split-container mt-2">
+                        <div class="probability-split-bar">
+                            <div id="mlProbBarSuspicious" class="prob-bar-suspicious" style="width: 0%" title="Suspicious probability"></div>
+                            <div id="mlProbBarLegitimate" class="prob-bar-legitimate" style="width: 100%" title="Legitimate probability"></div>
+                        </div>
+                    </div>
 
-                        <div id="mlProgress"
-                             class="progress-bar"
-                             style="width: 0%">
+                    <!-- Dual Probability Readouts -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 small">
+                        <div>
+                            <span class="text-secondary"><i class="bi bi-shield-exclamation text-danger me-1"></i> Suspicious:</span>
+                            <strong id="mlSuspiciousProb" class="text-danger ms-1">0.0%</strong>
+                        </div>
+                        <div>
+                            <span class="text-secondary"><i class="bi bi-shield-check text-success me-1"></i> Legitimate:</span>
+                            <strong id="mlLegitimateProb" class="text-success ms-1">100.0%</strong>
+                        </div>
+                    </div>
+
+                    <!-- Active Model Info -->
+                    <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-subtle small">
+                        <span class="text-secondary">Active Estimator:</span>
+                        <span id="mlModelName" class="font-mono fw-semibold text-info">Gradient Boosting</span>
+                    </div>
+
+                    <!-- Explainable ML Signals Box -->
+                    <div id="mlExplanationBox" class="ml-explanation-box mt-3 p-3 rounded">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small fw-bold text-primary">
+                                <i class="bi bi-lightbulb-fill text-warning me-1"></i> ML Explanation
+                            </span>
+                            <span class="badge bg-secondary text-light small" style="font-size: 0.68rem;">Feature Attribution</span>
                         </div>
 
+                        <!-- Strong Contributing Signals (Risk Escalators) -->
+                        <div id="mlEscalatingSection" class="mb-2">
+                            <div class="small fw-semibold text-secondary mb-1">
+                                Strong contributing signals:
+                            </div>
+                            <div id="mlTopSuspiciousList" class="d-flex flex-column gap-1">
+                                <!-- Populated dynamically by scanner.js (e.g. ↑ URL length, ↑ Suspicious keyword count, ↑ IP address) -->
+                            </div>
+                        </div>
+
+                        <!-- Mitigating / Legitimate Signals -->
+                        <div id="mlMitigatingSection" class="mt-2 pt-2 border-top border-subtle">
+                            <div class="small fw-semibold text-secondary mb-1">
+                                Mitigating safety signals:
+                            </div>
+                            <div id="mlTopLegitimateList" class="d-flex flex-column gap-1">
+                                <!-- Populated dynamically by scanner.js (e.g. ↓ HTTPS) -->
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="progress-info">
+                    <!-- Collapsible Feature Inspector Button -->
+                    <button type="button" id="toggleFeaturesBtn" class="btn btn-sm btn-outline-secondary mt-3 w-100 d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-list-columns-reverse me-1"></i> Inspect 24 Extracted Features</span>
+                        <i id="featureToggleIcon" class="bi bi-chevron-down"></i>
+                    </button>
 
-                        <span>
-                            Suspicious probability
-                        </span>
-
-                        <strong id="mlScore">
-                            0%
-                        </strong>
-
+                    <!-- Extracted Features Container -->
+                    <div id="mlFeaturesBox" class="ml-features-collapse d-none mt-2">
+                        <div class="small text-secondary mb-2">
+                            Extracted lexical & structural vector used for inference:
+                        </div>
+                        <div id="mlFeaturesGrid" class="ml-features-grid">
+                            <!-- Populated dynamically by scanner.js -->
+                        </div>
                     </div>
+
+                    <!-- Hidden element for backwards compatibility if needed -->
+                    <span id="mlScore" class="d-none">0%</span>
+                    <div id="mlProgress" class="d-none"></div>
 
                 </div>
 
@@ -382,6 +1551,281 @@
 
             </div>
 
+        <!-- Detected Security Characteristics Checklist -->
+        <div id="detectedCard" class="detected-card mt-4 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="detected-card-title">
+                    <i class="bi bi-shield-check text-primary me-2"></i>
+                    Detected Security Characteristics
+                </div>
+                <span id="detectedCountBadge" class="badge bg-secondary">0 Detected</span>
+            </div>
+            <div id="detectedList" class="detected-checklist">
+                <!-- Checkmarked items populated dynamically by scanner.js -->
+            </div>
+        </div>
+
+        <!-- Domain Intelligence & Infrastructure Card -->
+        <div id="domainIntelCard" class="domain-intel-card mt-4 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="domain-intel-title">
+                    <i class="bi bi-diagram-3 text-primary me-2"></i>
+                    Domain Intelligence & Infrastructure
+                </div>
+                <div id="domainIntelBadge" class="domain-intel-status-badge">
+                    <span id="domainStatusBadge" class="badge bg-secondary">Active</span>
+                </div>
+            </div>
+
+            <!-- Recently Registered Warning Alert -->
+            <div id="domainRecentAlert" class="domain-warning-banner d-none mb-3">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                <span id="domainRecentText">⚠ Recently registered domain</span>
+            </div>
+
+            <div class="row g-3">
+                <!-- WHOIS & Registration Information -->
+                <div class="col-lg-6">
+                    <div class="intel-subcard">
+                        <div class="intel-subcard-header">
+                            <i class="bi bi-card-heading text-info me-1"></i> WHOIS Registration Details
+                        </div>
+                        <div class="intel-kv-list">
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Registered Domain</span>
+                                <span id="whoisDomain" class="intel-val font-mono">-</span>
+                            </div>
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Domain Age</span>
+                                <span id="whoisAge" class="intel-val fw-semibold">-</span>
+                            </div>
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Creation Date</span>
+                                <span id="whoisCreation" class="intel-val">-</span>
+                            </div>
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Registrar</span>
+                                <span id="whoisRegistrar" class="intel-val text-truncate" style="max-width: 220px;">-</span>
+                            </div>
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Expiration Date</span>
+                                <span id="whoisExpiration" class="intel-val">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DNS Analysis -->
+                <div class="col-lg-6">
+                    <div class="intel-subcard">
+                        <div class="intel-subcard-header">
+                            <i class="bi bi-hdd-network text-info me-1"></i> DNS Analysis & Records
+                        </div>
+                        <div class="intel-kv-list">
+                            <div class="intel-kv-item">
+                                <span class="intel-key">Resolution Status</span>
+                                <span id="dnsStatusBadge" class="badge bg-secondary">Unknown</span>
+                            </div>
+                            <div class="intel-kv-item flex-column align-items-start gap-1">
+                                <span class="intel-key">A Record(s) (IPv4)</span>
+                                <div id="dnsARecords" class="dns-pill-container">-</div>
+                            </div>
+                            <div class="intel-kv-item flex-column align-items-start gap-1">
+                                <span class="intel-key">MX Record(s) (Mail)</span>
+                                <div id="dnsMxRecords" class="dns-pill-container">-</div>
+                            </div>
+                            <div class="intel-kv-item flex-column align-items-start gap-1">
+                                <span class="intel-key">Nameservers (NS)</span>
+                                <div id="dnsNsRecords" class="dns-pill-container">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TLS Security & Certificate Card -->
+        <div id="tlsCard" class="tls-security-card mt-4 d-none">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="tls-card-title">
+                    <i class="bi bi-shield-lock text-primary me-2"></i>
+                    TLS Security
+                </div>
+                <div id="tlsStatusBadgeContainer">
+                    <span id="tlsStatusBadge" class="badge bg-secondary">Unknown</span>
+                </div>
+            </div>
+
+            <!-- Requested TLS Security Checklist -->
+            <div class="tls-checklist-grid mb-3">
+                <div class="tls-check-row">
+                    <span class="tls-check-label">HTTPS:</span>
+                    <span id="tlsHttpsVal" class="tls-check-val">
+                        <i class="bi bi-check-lg text-success"></i>
+                    </span>
+                </div>
+                <div class="tls-check-row">
+                    <span class="tls-check-label">Certificate:</span>
+                    <span id="tlsCertVal" class="tls-check-val">
+                        <i class="bi bi-check-lg text-success"></i> Valid
+                    </span>
+                </div>
+                <div class="tls-check-row">
+                    <span class="tls-check-label">Hostname match:</span>
+                    <span id="tlsHostMatchVal" class="tls-check-val">
+                        <i class="bi bi-check-lg text-success"></i>
+                    </span>
+                </div>
+                <div class="tls-check-row">
+                    <span class="tls-check-label">Certificate expiry:</span>
+                    <span id="tlsExpiryVal" class="tls-check-val fw-semibold">
+                        42 days
+                    </span>
+                </div>
+            </div>
+
+            <!-- Certificate Metadata Details (Issuer, Subject CN, Dates) -->
+            <div class="tls-details-box p-3 mb-3">
+                <div class="row g-2 small">
+                    <div class="col-sm-6">
+                        <span class="text-secondary">Certificate Issuer:</span>
+                        <strong id="tlsIssuer" class="text-primary d-inline-block text-truncate align-bottom ms-1" style="max-width: 220px;">-</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary">Subject CN:</span>
+                        <code id="tlsSubjectCn" class="ms-1">-</code>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary">Issued Date:</span>
+                        <span id="tlsIssuedDate" class="ms-1">-</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-secondary">Expiration Date:</span>
+                        <span id="tlsExpirationDate" class="ms-1">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cybersecurity Advisory Banner -->
+            <div class="tls-advisory-banner d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill text-info flex-shrink-0"></i>
+                <small class="tls-advisory-text">
+                    <strong>Cybersecurity Advisory:</strong> Valid HTTPS does not mean the site is trustworthy. Phishing sites frequently have valid certificates (e.g. Let's Encrypt).
+                </small>
+            </div>
+        </div>
+
+        <!-- Machine Learning Pipeline & Multi-Model Benchmark Card -->
+        <div id="mlBenchmarkCard" class="ml-benchmark-card mt-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="ml-benchmark-title">
+                    <i class="bi bi-cpu-fill text-primary me-2"></i>
+                    Machine Learning Pipeline & Multi-Model Benchmark
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">PhiUSIIL Corpus (235k)</span>
+                    <span class="badge bg-primary">5 Algorithms Compared</span>
+                </div>
+            </div>
+
+            <!-- Pipeline Visual Flow: URL -> Feature Extraction -> ML Model -> Probability -->
+            <div class="pipeline-flow-wrapper mb-4">
+                <div class="pipeline-flow-title small text-secondary fw-semibold mb-2">
+                    <i class="bi bi-diagram-2 me-1"></i> TRANSPARENT INFERENCE PIPELINE ARCHITECTURE
+                </div>
+                <div class="pipeline-flow-container">
+                    <div class="pipeline-step">
+                        <div class="step-num">01</div>
+                        <div class="step-icon"><i class="bi bi-qr-code"></i></div>
+                        <div class="step-label">QR URL</div>
+                        <div class="step-sub">Normalized Target</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
+                    <div class="pipeline-step">
+                        <div class="step-num">02</div>
+                        <div class="step-icon"><i class="bi bi-vector-pen"></i></div>
+                        <div class="step-label">Feature Vector</div>
+                        <div class="step-sub">24 Lexical Signals</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
+                    <div class="pipeline-step step-active">
+                        <div class="step-num">03</div>
+                        <div class="step-icon"><i class="bi bi-cpu"></i></div>
+                        <div class="step-label">ML Estimator</div>
+                        <div class="step-sub">HistGradientBoosting</div>
+                    </div>
+                    <div class="pipeline-arrow"><i class="bi bi-arrow-right"></i></div>
+                    <div class="pipeline-step">
+                        <div class="step-num">04</div>
+                        <div class="step-icon"><i class="bi bi-pie-chart-fill"></i></div>
+                        <div class="step-label">Dual Probabilities</div>
+                        <div class="step-sub">Calibrated Output</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparative Models Benchmark Table -->
+            <div class="benchmark-table-wrapper">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small text-secondary fw-semibold">
+                        <i class="bi bi-bar-chart-line me-1"></i> HELD-OUT TEST EVALUATION MATRIX (ACCURACY, PRECISION, RECALL, F1)
+                    </span>
+                    <small class="text-secondary">Stratified 80/20 Test Split</small>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover ml-benchmark-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Model Algorithm</th>
+                                <th>Accuracy</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1-Score</th>
+                                <th>Train Time</th>
+                                <th>Production Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benchmarkTableBody">
+                            <!-- Populated dynamically from /api/v1/ml/benchmarks -->
+                            <tr>
+                                <td colspan="7" class="text-center text-secondary py-3">
+                                    <span class="spinner-border spinner-border-sm me-1"></span> Loading benchmark metrics...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dataset Context Note -->
+            <div class="ml-benchmark-footer mt-3 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-secondary">
+                <div>
+                    <i class="bi bi-database me-1"></i>
+                    <strong>Corpus:</strong> PhiUSIIL Phishing URL Dataset & Real-world QR Attacks (235,370 URLs)
+                </div>
+                <div>
+                    <i class="bi bi-check2-circle text-success me-1"></i>
+                    Evaluated across 24 lexical, structural, and entropy dimensions
+                </div>
+            </div>
+        </div>
+
+        <!-- Threat Indicators -->
+
+        <div id="indicatorsCard" class="info-card mt-4 d-none">
+
+            <div class="info-card-title">
+
+                <i class="bi bi-shield-exclamation text-warning"></i>
+
+                Detected Security Indicators
+
+            </div>
+
+            <div id="indicatorsList" class="d-flex flex-wrap gap-2 mt-3">
+                <!-- Badges populated by scanner.js -->
+            </div>
+
         </div>
 
 
@@ -404,8 +1848,32 @@
         </div>
 
 
+        <!-- Recent Scans History -->
+
+        <div id="recentScansContainer" class="recent-scans-card mt-4 d-none">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div class="info-card-title mb-0">
+                    <i class="bi bi-clock-history me-1 text-primary"></i>
+                    Recent Scans (Session)
+                </div>
+
+                <button type="button" id="clearRecentBtn" class="btn btn-sm text-secondary p-0">
+                    <i class="bi bi-trash3 me-1"></i> Clear History
+                </button>
+
+            </div>
+
+            <div id="recentScansList" class="recent-scans-grid">
+                <!-- Dynamically populated by scanner.js -->
+            </div>
+
+        </div>
+
+
         <button id="scanAgain"
-                class="btn btn-outline-light scan-again">
+                class="btn scan-again">
 
             <i class="bi bi-arrow-repeat"></i>
 
@@ -418,100 +1886,439 @@
 </section>
 
 
+<!-- ================= SCAN HISTORY DASHBOARD ================= -->
+
+<section id="historySection" class="history-section py-5">
+    <div class="container">
+        <div class="history-card p-4 rounded-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history fs-4 text-primary"></i>
+                        <h3 class="mb-0 fw-bold history-title">SCAN HISTORY</h3>
+                        <span id="historyCountBadge" class="badge bg-primary ms-2">4 Scans</span>
+                    </div>
+                    <p class="text-secondary small mb-0 mt-1">
+                        Historical audit log of inspected QR destinations. Click any entry to view its complete analysis.
+                    </p>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" id="historyResetBtn" class="btn btn-sm btn-outline-secondary" title="Reset to default seed examples">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                    <button type="button" id="historyExportCsvBtn" class="btn btn-sm btn-outline-primary" title="Export audit trail to CSV">
+                        <i class="bi bi-download"></i> Export CSV
+                    </button>
+                    <button type="button" id="historyClearBtn" class="btn btn-sm btn-outline-danger" title="Clear scan history">
+                        <i class="bi bi-trash"></i> Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Filter Controls Bar -->
+            <div class="history-filter-bar p-3 rounded mb-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 380px;">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-surface border-subtle text-secondary">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="historySearchInput" class="form-control form-control-sm border-subtle" placeholder="Filter by URL or domain...">
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="small text-secondary fw-semibold">Risk:</span>
+                    <div class="btn-group btn-group-sm" role="group" id="historyRiskFilters">
+                        <button type="button" class="btn btn-outline-secondary active" data-risk="ALL">All</button>
+                        <button type="button" class="btn btn-outline-danger" data-risk="HIGH">HIGH</button>
+                        <button type="button" class="btn btn-outline-warning" data-risk="MEDIUM">MEDIUM</button>
+                        <button type="button" class="btn btn-outline-success" data-risk="LOW">LOW</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exact Requested Table Format -->
+            <!--
+            URL                     Risk       Date
+            ────────────────────────────────────────
+            google.com               LOW        Today
+            example.xyz              HIGH       Today
+            bit.ly/abc123            MEDIUM     Yesterday
+            bank-login.xyz           HIGH       Yesterday
+            -->
+            <div class="table-responsive history-table-wrapper">
+                <table class="table table-hover align-middle mb-0 history-table">
+                    <thead>
+                        <tr class="history-table-header">
+                            <th scope="col" style="width: 48%;">URL</th>
+                            <th scope="col" style="width: 22%;">Risk</th>
+                            <th scope="col" style="width: 18%;">Date</th>
+                            <th scope="col" class="text-end" style="width: 12%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Dynamically populated rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="historyEmptyState" class="text-center py-5 d-none">
+                <i class="bi bi-journal-x fs-1 text-secondary opacity-50 d-block mb-2"></i>
+                <h6 class="text-secondary mb-1">No Scan Records Found</h6>
+                <small class="text-muted">Scanned destinations will appear here automatically.</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ================= SECURITY REPORT PREVIEW MODAL ================= -->
+
+<div class="modal fade" id="securityReportModal" tabindex="-1" aria-labelledby="securityReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content security-report-modal-content">
+            <div class="modal-header border-bottom border-subtle">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text-fill text-primary fs-5"></i>
+                    <h5 class="modal-title fw-bold mb-0" id="securityReportModalLabel">Security Analysis Report</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="small text-secondary">
+                        Formatted Security Analysis Report matching enterprise cyber-threat incident specifications.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="copyModalReportBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-clipboard"></i> Copy Text
+                        </button>
+                        <button type="button" id="modalDownloadPdfBtn" class="btn btn-sm btn-primary">
+                            <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+                        </button>
+                    </div>
+                </div>
+                <pre id="securityReportPre" class="security-report-pre p-3 rounded-3 mb-0"></pre>
+            </div>
+            <div class="modal-footer border-top border-subtle">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= SIGN IN MODAL ================= -->
+<div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header border-bottom border-subtle">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="auth-icon-badge">
+                        <i class="bi bi-shield-lock-fill text-accent"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="signInModalLabel">Analyst Sign In</h5>
+                        <div class="small text-secondary">Access threat intelligence & audit logs</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="signInForm" novalidate>
+                    <div id="signInAlert" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
+
+                    <!-- Quick Demo Analyst button -->
+                    <div class="auth-demo-box p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="small fw-bold text-accent"><i class="bi bi-lightning-charge-fill me-1"></i> Quick Demo Access</div>
+                            <div class="text-secondary small" style="font-size: 0.78rem;">Pre-seeded Analyst account for instant evaluation</div>
+                        </div>
+                        <button type="button" id="fillDemoCredentialsBtn" class="btn btn-sm btn-outline-cyan">
+                            Use Demo
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="signInIdentifier" class="form-label small fw-semibold">Username or Email</label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="signInIdentifier" placeholder="demo_analyst or analyst@quishing.local" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="signInPassword" class="form-label small fw-semibold mb-0">Password</label>
+                        </div>
+                        <div class="input-group auth-input-group mt-1">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input type="password" class="form-control" id="signInPassword" placeholder="Enter password" required autocomplete="current-password">
+                            <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="signInPassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="signInSubmitBtn" class="btn btn-primary-glow">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top border-subtle justify-content-center py-2">
+                <span class="small text-secondary">Don't have an account?</span>
+                <button type="button" class="btn btn-link btn-sm text-accent text-decoration-none p-0 fw-semibold ms-1" id="switchToSignUpBtn">
+                    Sign Up here
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= SIGN UP MODAL ================= -->
+<div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header border-bottom border-subtle">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="auth-icon-badge">
+                        <i class="bi bi-person-plus-fill text-accent"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="signUpModalLabel">Create Analyst Account</h5>
+                        <div class="small text-secondary">Join QR Quishing Inspector Platform</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="signUpForm" novalidate>
+                    <div id="signUpAlert" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
+
+                    <div class="mb-3">
+                        <label for="signUpFullName" class="form-label small fw-semibold">Full Name</label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                            <input type="text" class="form-control" id="signUpFullName" placeholder="e.g. Alex Hunter" required autocomplete="name">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label for="signUpUsername" class="form-label small fw-semibold">Username</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-at"></i></span>
+                                <input type="text" class="form-control" id="signUpUsername" placeholder="analyst_alex" required autocomplete="username">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="signUpEmail" class="form-label small fw-semibold">Email</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="signUpEmail" placeholder="alex@domain.com" required autocomplete="email">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="signUpPassword" class="form-label small fw-semibold">Password <span class="text-secondary fw-normal">(min 8 chars)</span></label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="signUpPassword" placeholder="Create strong password" required autocomplete="new-password">
+                            <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="signUpPassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="signUpPasswordConfirm" class="form-label small fw-semibold">Confirm Password</label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text"><i class="bi bi-check2-circle"></i></span>
+                            <input type="password" class="form-control" id="signUpPasswordConfirm" placeholder="Re-enter password" required autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="signUpSubmitBtn" class="btn btn-primary-glow">
+                            <i class="bi bi-person-check-fill me-1"></i> Complete Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top border-subtle justify-content-center py-2">
+                <span class="small text-secondary">Already registered?</span>
+                <button type="button" class="btn btn-link btn-sm text-accent text-decoration-none p-0 fw-semibold ms-1" id="switchToSignInBtn">
+                    Sign In here
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <!-- ================= HOW IT WORKS ================= -->
 
-<section class="how-section">
+<section id="howSection" class="how-section py-5">
 
     <div class="container">
 
-        <div class="section-heading">
+        <div class="section-heading text-center mb-5">
 
-            <span>
-                HOW IT WORKS
+            <span class="badge bg-primary-subtle text-primary px-3 py-2 text-uppercase fw-bold rounded-pill mb-2">
+                <i class="bi bi-cpu-fill me-1"></i> Multi-Layered Cyber Defense
             </span>
 
-            <h2>
-                Three simple steps
+            <h2 class="display-6 fw-bold">
+                HOW QR QUISHING INSPECTOR WORKS
             </h2>
 
-            <p>
-                Check a QR destination before trusting it.
+            <p class="text-secondary max-w-650 mx-auto">
+                Comprehensive 7-stage inspection pipeline defending users against malicious QR codes, deceptive redirects, and brand impersonation attacks.
             </p>
 
         </div>
 
 
-        <div class="row g-4">
+        <div class="row g-4 how-works-7steps-grid justify-content-center">
 
-            <div class="col-md-4">
-
-                <div class="step-card">
-
-                    <div class="step-number">
-                        01
+            <!-- 01 QR Detection -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">01</div>
+                        <div class="step-icon-box bg-primary-subtle text-primary">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
                     </div>
-
-                    <i class="bi bi-qr-code-scan"></i>
-
-                    <h4>
-                        Scan
-                    </h4>
-
-                    <p>
-                        Point your camera at a QR code
-                        and let the scanner read its destination.
+                    <h4 class="step-title-pro fw-bold mb-2">QR Detection</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Detect and decode the QR code.
                     </p>
-
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-camera me-1"></i> Real-time OpenCV / jsQR decoder engine
+                    </div>
                 </div>
-
             </div>
 
-
-            <div class="col-md-4">
-
-                <div class="step-card">
-
-                    <div class="step-number">
-                        02
+            <!-- 02 URL Extraction -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">02</div>
+                        <div class="step-icon-box bg-info-subtle text-info">
+                            <i class="bi bi-link-45deg"></i>
+                        </div>
                     </div>
-
-                    <i class="bi bi-cpu"></i>
-
-                    <h4>
-                        Analyze
-                    </h4>
-
-                    <p>
-                        The application checks URL characteristics
-                        and sends the URL through the ML classifier.
+                    <h4 class="step-title-pro fw-bold mb-2">URL Extraction</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Extract and normalize the destination.
                     </p>
-
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-braces me-1"></i> RFC 3986 canonicalization & payload routing
+                    </div>
                 </div>
-
             </div>
 
-
-            <div class="col-md-4">
-
-                <div class="step-card">
-
-                    <div class="step-number">
-                        03
+            <!-- 03 Security Analysis -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">03</div>
+                        <div class="step-icon-box bg-warning-subtle text-warning">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
                     </div>
-
-                    <i class="bi bi-shield-check"></i>
-
-                    <h4>
-                        Protect
-                    </h4>
-
-                    <p>
-                        Get a risk score and clear reasons
-                        before visiting the destination.
+                    <h4 class="step-title-pro fw-bold mb-2">Security Analysis</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Examine URL and domain characteristics.
                     </p>
-
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-search me-1"></i> 13 heuristic checks, WHOIS, DNS & TLS audits
+                    </div>
                 </div>
+            </div>
 
+            <!-- 04 ML Classification -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">04</div>
+                        <div class="step-icon-box bg-danger-subtle text-danger">
+                            <i class="bi bi-cpu-fill"></i>
+                        </div>
+                    </div>
+                    <h4 class="step-title-pro fw-bold mb-2">ML Classification</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Predict phishing probability.
+                    </p>
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-pie-chart-fill me-1"></i> 24-feature HistGradientBoosting estimator
+                    </div>
+                </div>
+            </div>
+
+            <!-- 05 Threat Intelligence -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">05</div>
+                        <div class="step-icon-box bg-purple-subtle text-purple">
+                            <i class="bi bi-database-check"></i>
+                        </div>
+                    </div>
+                    <h4 class="step-title-pro fw-bold mb-2">Threat Intelligence</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Check available reputation signals.
+                    </p>
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-hdd-network me-1"></i> Multi-feed Safe Browsing, VirusTotal & URLhaus
+                    </div>
+                </div>
+            </div>
+
+            <!-- 06 Risk Engine -->
+            <div class="col-lg-4 col-md-6">
+                <div class="step-card-pro h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro">06</div>
+                        <div class="step-icon-box bg-primary-subtle text-primary">
+                            <i class="bi bi-diagram-3-fill"></i>
+                        </div>
+                    </div>
+                    <h4 class="step-title-pro fw-bold mb-2">Risk Engine</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Combine signals into a risk score.
+                    </p>
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-sliders me-1"></i> Calibrated synthesis: 35% Rules + 45% ML + 20% Domain
+                    </div>
+                </div>
+            </div>
+
+            <!-- 07 Security Recommendation -->
+            <div class="col-lg-6 col-md-8">
+                <div class="step-card-pro step-card-highlight h-100 p-4 rounded-3">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="step-number-pro text-success">07</div>
+                        <div class="step-icon-box bg-success-subtle text-success">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+                    </div>
+                    <h4 class="step-title-pro fw-bold mb-2">Security Recommendation</h4>
+                    <p class="step-desc-pro text-secondary mb-0">
+                        Explain what the user should do.
+                    </p>
+                    <div class="step-tech-subtext mt-3 pt-2 border-top border-subtle small text-muted">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Direct, actionable guidance and user education
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -546,12 +2353,33 @@
             <div class="footer-tech">
 
                 <span>Python</span>
-                <span>Flask</span>
-                <span>Machine Learning</span>
+                <span>FastAPI</span>
+                <span>Scikit-Learn</span>
+                <span>OpenCV</span>
                 <span>JavaScript</span>
 
             </div>
 
+        </div>
+
+        <div class="footer-resources d-flex flex-wrap align-items-center justify-content-between gap-3 py-3 my-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="text-secondary small fw-bold text-uppercase"><i class="bi bi-code-slash me-1"></i> Developer Resources:</span>
+                <a href="/docs" target="_blank" class="footer-api-link">
+                    <i class="bi bi-file-earmark-code"></i> OpenAPI / Swagger Docs
+                </a>
+                <span class="text-secondary opacity-50">•</span>
+                <a href="/redoc" target="_blank" class="footer-api-link">
+                    <i class="bi bi-journal-text"></i> ReDoc
+                </a>
+                <span class="text-secondary opacity-50">•</span>
+                <a href="/api/v1/health" target="_blank" class="footer-api-link">
+                    <i class="bi bi-heart-pulse"></i> Health Status
+                </a>
+            </div>
+            <div class="text-secondary small">
+                Trained Engine: <span class="soc-model-text fw-semibold">HistGradientBoosting</span> (PhiUSIIL 235k Dataset)
+            </div>
         </div>
 
         <div class="footer-bottom">
@@ -576,11 +2404,14 @@
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js">
 </script>
 
+<!-- Bootstrap Bundle JS (includes Popper for Modals and Tooltips) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
 
 <!-- Scanner JavaScript -->
-
-<script src="{{ url_for('static', filename='js/scanner.js') }}">
+<script src="/static/js/scanner.js?v=3.7">
 </script>
+
 
 
 

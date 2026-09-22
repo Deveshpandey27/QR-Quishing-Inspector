@@ -1,0 +1,95 @@
+{
+  "dataset": {
+    "name": "PhiUSIIL Phishing URL Dataset & QR Attack Corpus",
+    "total_samples": 235370,
+    "benchmark_samples": 80000,
+    "train_samples": 64000,
+    "test_samples": 16000,
+    "features_count": 24,
+    "features_list": [
+      "url_length",
+      "hostname_length",
+      "path_length",
+      "query_length",
+      "has_https",
+      "has_ip_address",
+      "dot_count_host",
+      "dot_count_path",
+      "hyphen_count_host",
+      "hyphen_count_path",
+      "underscore_count",
+      "slash_count",
+      "question_mark_count",
+      "equals_count",
+      "at_symbol",
+      "percent_encoded",
+      "has_double_slash_path",
+      "subdomain_count",
+      "num_digits_host",
+      "num_digits_url",
+      "entropy_hostname",
+      "is_shortener",
+      "is_punycode",
+      "suspicious_keyword_count"
+    ]
+  },
+  "active_model": "Gradient Boosting",
+  "generated_at": "2026-09-15 13:42:41",
+  "models": [
+    {
+      "model": "Logistic Regression",
+      "accuracy": 97.42,
+      "precision": 98.26,
+      "recall": 95.65,
+      "f1": 96.94,
+      "roc_auc": 99.23,
+      "training_time_sec": 0.27,
+      "is_active": false,
+      "active_badge": null
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 98.28,
+      "precision": 99.03,
+      "recall": 96.93,
+      "f1": 97.97,
+      "roc_auc": 99.59,
+      "training_time_sec": 1.24,
+      "is_active": false,
+      "active_badge": null
+    },
+    {
+      "model": "Decision Tree",
+      "accuracy": 98.53,
+      "precision": 99.3,
+      "recall": 97.25,
+      "f1": 98.26,
+      "roc_auc": 99.04,
+      "training_time_sec": 0.09,
+      "is_active": false,
+      "active_badge": null
+    },
+    {
+      "model": "SVM (Linear)",
+      "accuracy": 96.91,
+      "precision": 97.94,
+      "recall": 94.75,
+      "f1": 96.32,
+      "roc_auc": 98.94,
+      "training_time_sec": 0.19,
+      "is_active": false,
+      "active_badge": null
+    },
+    {
+      "model": "Gradient Boosting",
+      "accuracy": 99.29,
+      "precision": 99.69,
+      "recall": 98.65,
+      "f1": 99.17,
+      "roc_auc": 99.7,
+      "training_time_sec": 2.64,
+      "is_active": true,
+      "active_badge": "Active Production Model"
+    }
+  ]
+}
